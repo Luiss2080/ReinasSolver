@@ -1,0 +1,40 @@
+# Archivos compilados
+*.class
+*.jar
+*.war
+*.ear
+
+# Directorios de compilación
+bin/
+build/
+target/
+out/
+
+# Archivos del IDE
+.idea/
+.vscode/
+.settings/
+*.iml
+*.ipr
+*.iws
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+
+# Archivos temporales
+*.tmp
+*.temp
+*.log
+
+# Archivos de respaldo
+*.bak
+*.swp
+*~
+
+# Variables de entorno locales
+.env
+.env.local
+
+# Directorios de dependencias
+node_modules/
