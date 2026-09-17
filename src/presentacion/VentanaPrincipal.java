@@ -17,13 +17,28 @@ import java.awt.image.BufferedImage;
  * @version 2.0
  */
 public class VentanaPrincipal extends JFrame {
+    // Tamaño mínimo y máximo del tablero expuestos al usuario. Por debajo de
+    // 8 el propio HeuristicaIA.resolver() sigue usando backtracking; a
+    // partir de 9 pasa a Min-Conflicts (con reintento acotado por
+    // backtracking si no converge). El máximo se limita a un valor donde
+    // el tiempo de resolución sigue siendo interactivo en la mayoría de
+    // los equipos (unos pocos segundos), no porque el algoritmo falle más
+    // allá de eso.
+    private static final int TAMANO_MINIMO = 1;
+    private static final int TAMANO_MAXIMO = 100;
+    private static final int TAMANO_INICIAL = 8;
+
     private Tablero tablero;
     private HeuristicaIA ia;
     private PanelTablero panelTablero;
     private PanelControles panelControles;
     private EfectosVisuales efectos;
-    
+    private JSpinner spinnerTamano;
+    private int tamanoTablero = TAMANO_INICIAL;
+
     private JLabel lblEstadisticas;
+    private JLabel lblTitulo;
+    private JLabel lblReglas;
     
     /**
      * Constructor de la ventana principal
@@ -46,7 +61,7 @@ public class VentanaPrincipal extends JFrame {
         add(panelSuperior, BorderLayout.NORTH);
         
         // Panel central con el tablero
-        panelTablero = new PanelTablero(8);
+        panelTablero = new PanelTablero(tamanoTablero);
         JScrollPane scrollTablero = new JScrollPane(panelTablero);
         scrollTablero.setPreferredSize(new Dimension(550, 550));
         add(scrollTablero, BorderLayout.CENTER);
@@ -71,14 +86,53 @@ public class VentanaPrincipal extends JFrame {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         panel.setBackground(new Color(63, 81, 181));
-        
+
         // Título con estilo moderno
-        JLabel titulo = new JLabel("N-Reinas 8x8 - Algoritmo Heurístico", JLabel.CENTER);
-        titulo.setFont(new Font("Segoe UI", Font.BOLD, 24));
-        titulo.setForeground(Color.WHITE);
-        panel.add(titulo, BorderLayout.CENTER);
-        
+        lblTitulo = new JLabel(tituloVentana(), JLabel.CENTER);
+        lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 24));
+        lblTitulo.setForeground(Color.WHITE);
+        panel.add(lblTitulo, BorderLayout.CENTER);
+
+        // Control de tamaño del tablero: habilita realmente elegir N,
+        // incluyendo los tamaños donde el solucionador usa Min-Conflicts
+        // (N > 8) en lugar de backtracking.
+        JPanel panelTamano = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        panelTamano.setOpaque(false);
+
+        JLabel lblTamano = new JLabel("Tamaño (N):");
+        lblTamano.setForeground(Color.WHITE);
+        lblTamano.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+
+        spinnerTamano = new JSpinner(new SpinnerNumberModel(tamanoTablero, TAMANO_MINIMO, TAMANO_MAXIMO, 1));
+        spinnerTamano.setPreferredSize(new Dimension(60, 28));
+        spinnerTamano.addChangeListener(e -> {
+            if (panelControles != null && panelControles.isResolviendo()) {
+                // No cambiar el tamaño mientras la IA está resolviendo.
+                spinnerTamano.setValue(tamanoTablero);
+                return;
+            }
+            tamanoTablero = (Integer) spinnerTamano.getValue();
+            crearNuevoJuego();
+        });
+
+        panelTamano.add(lblTamano);
+        panelTamano.add(spinnerTamano);
+        panel.add(panelTamano, BorderLayout.EAST);
+
         return panel;
+    }
+
+    private String tituloVentana() {
+        return "N-Reinas " + tamanoTablero + "x" + tamanoTablero + " - Algoritmo Heurístico";
+    }
+
+    private String textoReglas() {
+        return "<html><div style='color: #333; font-size: 12px;'>" +
+            "<b>Objetivo:</b> Colocar " + tamanoTablero + " reina" + (tamanoTablero == 1 ? "" : "s") + "<br/>" +
+            "<b>Restriccion:</b> No pueden atacarse<br/>" +
+            "<b>Ataques:</b> Fila, columna, diagonal<br/>" +
+            "<b>Algoritmo:</b> " + (tamanoTablero <= 8 ? "Backtracking" : "Min-Conflicts") + "<br/>" +
+            "</div></html>";
     }
     
     /**
@@ -106,12 +160,7 @@ public class VentanaPrincipal extends JFrame {
         
         // Reglas del juego
         JPanel panelReglas = crearPanelSeccion("Reglas del Juego", new Color(255, 152, 0));
-        JLabel lblReglas = new JLabel("<html><div style='color: #333; font-size: 12px;'>" +
-            "<b>Objetivo:</b> Colocar 8 reinas<br/>" +
-            "<b>Restriccion:</b> No pueden atacarse<br/>" +
-            "<b>Ataques:</b> Fila, columna, diagonal<br/>" +
-            "<b>Algoritmo:</b> Resuelve automáticamente<br/>" +
-            "</div></html>");
+        lblReglas = new JLabel(textoReglas());
         lblReglas.setVerticalAlignment(SwingConstants.TOP);
         panelReglas.add(lblReglas, BorderLayout.CENTER);
         
@@ -133,12 +182,12 @@ public class VentanaPrincipal extends JFrame {
         ));
         
         // Título con color de acento
-        JLabel lblTitulo = new JLabel(titulo);
-        lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        lblTitulo.setForeground(colorAccento);
-        lblTitulo.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
-        panel.add(lblTitulo, BorderLayout.NORTH);
-        
+        JLabel lblTituloSeccion = new JLabel(titulo);
+        lblTituloSeccion.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        lblTituloSeccion.setForeground(colorAccento);
+        lblTituloSeccion.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
+        panel.add(lblTituloSeccion, BorderLayout.NORTH);
+
         return panel;
     }
     
@@ -160,7 +209,7 @@ public class VentanaPrincipal extends JFrame {
      * Configura la ventana principal
      */
     private void configurarVentana() {
-        setTitle("N-Reinas 8x8 - Algoritmo Heurístico v2.0");
+        setTitle(tituloVentana() + " v2.0");
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         setResizable(true);
         setMinimumSize(new Dimension(1200, 800));
@@ -216,24 +265,33 @@ public class VentanaPrincipal extends JFrame {
     }
     
     /**
-     * Crea un nuevo juego con tablero 8x8
+     * Crea un nuevo juego con un tablero de tamaño tamanoTablero x
+     * tamanoTablero.
      */
     public void crearNuevoJuego() {
-        tablero = new Tablero(8);
+        tablero = new Tablero(tamanoTablero);
         ia = new HeuristicaIA(tablero);
-        
+
         // Actualizar panel del tablero
         remove(panelTablero.getParent());
-        panelTablero = new PanelTablero(8);
-        
+        panelTablero = new PanelTablero(tamanoTablero);
+
         JScrollPane scrollTablero = new JScrollPane(panelTablero);
         scrollTablero.setPreferredSize(new Dimension(550, 550));
         add(scrollTablero, BorderLayout.CENTER);
-        
+
+        if (lblTitulo != null) {
+            lblTitulo.setText(tituloVentana());
+        }
+        if (lblReglas != null) {
+            lblReglas.setText(textoReglas());
+        }
+        setTitle(tituloVentana() + " v2.0");
+
         // Actualizar visualización
         actualizarTablero();
         actualizarEstadisticas();
-        
+
         revalidate();
         repaint();
         pack();
@@ -275,11 +333,16 @@ public class VentanaPrincipal extends JFrame {
                     
                     if (solucionEncontrada) {
                         actualizarEstado("Solucion encontrada en " + (tiempoTotal / 1000.0) + "s!");
-                        efectos.mostrarMensajeExito("¡Solución encontrada para 8 reinas en " + (tiempoTotal / 1000.0) + "s!");
+                        efectos.mostrarMensajeExito("¡Solución encontrada para " + tamanoTablero
+                                + " reinas en " + (tiempoTotal / 1000.0) + "s!");
                         efectos.mostrarAnimacionCelebracion();
                     } else {
                         actualizarEstado("No se encontro solucion");
-                        efectos.mostrarMensajeError("No se pudo encontrar una solución para 8 reinas");
+                        String motivo = (tamanoTablero == 2 || tamanoTablero == 3)
+                                ? " (matemáticamente no existe solución para N=" + tamanoTablero + ")"
+                                : "";
+                        efectos.mostrarMensajeError("No se pudo encontrar una solución para "
+                                + tamanoTablero + " reinas" + motivo);
                     }
                     
                     actualizarEstadisticas();
@@ -334,12 +397,13 @@ public class VentanaPrincipal extends JFrame {
             String stats = String.format(
                 "<html><div style='color: #333; font-size: 12px;'>" +
                 "<b>Estadisticas:</b><br/>" +
-                "Tamano: 8x8<br/>" +
-                "Reinas: %d/8<br/>" +
+                "Tamano: %dx%d<br/>" +
+                "Reinas: %d/%d<br/>" +
                 "Conflictos: %d<br/>" +
                 "Estado: %s" +
                 "</div></html>",
-                tablero.contarReinas(),
+                tamanoTablero, tamanoTablero,
+                tablero.contarReinas(), tamanoTablero,
                 tablero.contarTotalConflictos(),
                 validez
             );
