@@ -317,26 +317,26 @@ public class PanelControles extends JPanel {
      * Muestra la ventana de ayuda
      */
     private void mostrarAyuda() {
-        String ayuda = 
-            "🏆 JUEGO DE LAS N-REINAS CON IA HEURÍSTICA\\n\\n" +
-            "📋 OBJETIVO:\\n" +
-            "Colocar N reinas en un tablero NxN de tal forma\\n" +
-            "que ninguna reina pueda atacar a otra.\\n\\n" +
-            "🎮 CONTROLES:\\n" +
-            "• 🤖 Resolver (Ctrl+R): Ejecuta la IA para encontrar la solución\\n" +
-            "• 🔄 Reiniciar (Ctrl+N): Limpia el tablero\\n" +
-            "• ❌ Salir (Ctrl+Q): Cierra la aplicación\\n" +
-            "• F1: Muestra esta ayuda\\n\\n" +
-            "🧠 ALGORITMOS UTILIZADOS:\\n" +
-            "• Backtracking optimizado (tableros pequeños)\\n" +
-            "• Min-Conflicts heurístico (tableros grandes)\\n\\n" +
-            "🎯 REGLAS:\\n" +
-            "• Las reinas no pueden estar en la misma fila\\n" +
-            "• Las reinas no pueden estar en la misma columna\\n" +
-            "• Las reinas no pueden estar en la misma diagonal\\n\\n" +
-            "🔍 INFORMACIÓN ADICIONAL:\\n" +
-            "• Haz clic en una celda para ver información detallada\\n" +
-            "• Las reinas en conflicto se muestran en rojo\\n" +
+        String ayuda =
+            "🏆 JUEGO DE LAS N-REINAS CON IA HEURÍSTICA\n\n" +
+            "📋 OBJETIVO:\n" +
+            "Colocar N reinas en un tablero NxN de tal forma\n" +
+            "que ninguna reina pueda atacar a otra.\n\n" +
+            "🎮 CONTROLES:\n" +
+            "• 🤖 Resolver (Ctrl+R): Ejecuta la IA para encontrar la solución\n" +
+            "• 🔄 Reiniciar (Ctrl+N): Limpia el tablero\n" +
+            "• ❌ Salir (Ctrl+Q): Cierra la aplicación\n" +
+            "• F1: Muestra esta ayuda\n\n" +
+            "🧠 ALGORITMOS UTILIZADOS:\n" +
+            "• Backtracking optimizado (tableros pequeños)\n" +
+            "• Min-Conflicts heurístico (tableros grandes)\n\n" +
+            "🎯 REGLAS:\n" +
+            "• Las reinas no pueden estar en la misma fila\n" +
+            "• Las reinas no pueden estar en la misma columna\n" +
+            "• Las reinas no pueden estar en la misma diagonal\n\n" +
+            "🔍 INFORMACIÓN ADICIONAL:\n" +
+            "• Haz clic en una celda para ver información detallada\n" +
+            "• Las reinas en conflicto se muestran en rojo\n" +
             "• Cambia el tamaño del tablero con el control superior";
         
         JOptionPane.showMessageDialog(
