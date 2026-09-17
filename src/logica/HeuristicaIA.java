@@ -14,7 +14,23 @@ public class HeuristicaIA {
     private Tablero tablero;
     private Random random;
     private static final int MAX_INTENTOS = 1000;
-    
+    // Min-Conflicts es una búsqueda de ascenso de colinas (hill-climbing):
+    // puede quedar atascada en una meseta (un estado sin conflicto que
+    // mejore) antes de llegar a una solución. La técnica estándar para
+    // resolver esto es el reinicio aleatorio: si un intento de MAX_INTENTOS
+    // pasos no converge, se descarta y se prueba de nuevo desde una
+    // colocación inicial aleatoria distinta.
+    private static final int MAX_REINICIOS = 30;
+    // Por encima de este tamaño, el backtracking exhaustivo de respaldo
+    // dejaría de ser viable en tiempo razonable (es O(N!) en el peor caso).
+    // Si todos los reinicios de Min-Conflicts fallan para un tablero de
+    // este tamaño o mayor (algo extremadamente improbable en la práctica:
+    // Min-Conflicts resuelve N-reinas casi siempre en pasos lineales con N,
+    // incluso para N en el orden de millones), se reporta que no se
+    // encontró solución en vez de bloquear la aplicación intentando un
+    // backtracking que nunca terminaría.
+    private static final int LIMITE_TAMANO_PARA_BACKTRACKING_DE_RESPALDO = 20;
+
     /**
      * Constructor que inicializa la clase con el tablero de trabajo.
      * @param tablero Instancia del tablero sobre el cual trabajar
@@ -84,32 +100,51 @@ public class HeuristicaIA {
     }
     
     /**
-     * Resuelve usando algoritmo de Min-Conflicts
+     * Resuelve usando el algoritmo de Min-Conflicts, con reinicio
+     * aleatorio acotado para escapar de mesetas (ver MAX_REINICIOS).
      * @return true si encuentra solución, false en caso contrario
      */
     public boolean resolverConMinConflicts() {
-        // Colocación inicial aleatoria (una reina por columna)
-        colocacionInicialAleatoria();
-        
-        // Intentar resolver con min-conflicts
-        for (int intento = 0; intento < MAX_INTENTOS; intento++) {
-            if (tablero.esSolucionValida()) {
-                tablero.setSolucionEncontrada(true);
-                return true;
+        for (int reinicio = 0; reinicio < MAX_REINICIOS; reinicio++) {
+            // Colocación inicial aleatoria (una reina por columna)
+            colocacionInicialAleatoria();
+
+            for (int intento = 0; intento < MAX_INTENTOS; intento++) {
+                if (tablero.esSolucionValida()) {
+                    tablero.setSolucionEncontrada(true);
+                    return true;
+                }
+
+                // Encontrar reina en conflicto
+                int[] reinaConflicto = encontrarReinaEnConflicto();
+                if (reinaConflicto == null) {
+                    // No hay ninguna reina en conflicto pero tampoco es una
+                    // solución completa: no debería ocurrir dado que
+                    // colocacionInicialAleatoria() siempre coloca N reinas,
+                    // pero se corta este intento y se reinicia por si acaso.
+                    break;
+                }
+
+                // Mover la reina a la posición con menos conflictos
+                moverReinaMinConflictos(reinaConflicto[0], reinaConflicto[1]);
             }
-            
-            // Encontrar reina en conflicto
-            int[] reinaConflicto = encontrarReinaEnConflicto();
-            if (reinaConflicto == null) {
-                break;
-            }
-            
-            // Mover la reina a la posición con menos conflictos
-            moverReinaMinConflictos(reinaConflicto[0], reinaConflicto[1]);
         }
-        
-        // Si min-conflicts no funciona, intentar con backtracking
-        return resolverConBacktracking();
+
+        // Min-Conflicts con reinicios prácticamente siempre converge para
+        // N-reinas (es el resultado clásico de Minton et al., 1992: resuelve
+        // incluso millones de reinas en pasos casi lineales). Si aun así
+        // fallan todos los reinicios, solo tiene sentido recurrir al
+        // backtracking exhaustivo de respaldo cuando el tablero es lo
+        // bastante pequeño para que termine en tiempo razonable; para
+        // tableros grandes, backtracking exhaustivo jamás terminaría en la
+        // práctica y bloquearía la aplicación indefinidamente, así que se
+        // reporta directamente que no se encontró solución.
+        if (tablero.getTamano() <= LIMITE_TAMANO_PARA_BACKTRACKING_DE_RESPALDO) {
+            return resolverConBacktracking();
+        }
+
+        tablero.setSolucionEncontrada(false);
+        return false;
     }
     
     /**
