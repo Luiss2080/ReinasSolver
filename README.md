@@ -1,108 +1,110 @@
-# 👑 ReinasSolver
+<div align="center">
+  <img src="docs/assets/logo.svg" width="96" alt="Logo de ReinasSolver" />
+  <h1>ReinasSolver</h1>
+  <p><b>Resuelve el problema de las N reinas (N de 1 a 100) con Backtracking y Min-Conflicts en una interfaz Java Swing.</b></p>
+  <img src="https://img.shields.io/badge/estado-funcional-2ea44f?style=for-the-badge" alt="Estado: funcional" />
+  <img src="https://img.shields.io/badge/Java-17%2B-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white" alt="Java 17+" />
+  <img src="https://img.shields.io/badge/tests-64%20OK-2ea44f?style=for-the-badge" alt="64 tests" />
+  <img src="https://github.com/Luiss2080/ReinasSolver/actions/workflows/ci.yml/badge.svg" alt="CI" />
+  <p>
+    <a href="#-inicio-rápido">Inicio rápido</a> ·
+    <a href="#-características">Características</a> ·
+    <a href="#️-arquitectura">Arquitectura</a> ·
+    <a href="#-pruebas">Pruebas</a> ·
+    <a href="#-lo-que-todavía-no-existe">Limitaciones</a>
+  </p>
+</div>
 
-> Resuelve el problema de las N-Reinas para cualquier tamaño de tablero
-> que elijas (1 a 100), combinando dos algoritmos clásicos de IA —
-> Backtracking exhaustivo para tableros pequeños y Min-Conflicts con
-> reinicio aleatorio para tableros grandes — con una interfaz de
-> escritorio en Java Swing. Pensado para quien quiera ver, de verdad
-> funcionando, la diferencia entre búsqueda exhaustiva y búsqueda
-> heurística en el mismo problema.
+ReinasSolver permite ver en el mismo problema la diferencia entre **búsqueda exhaustiva** (Backtracking, para tableros pequeños) y **búsqueda heurística** (Min-Conflicts con reinicios, para tableros grandes). Es una herramienta didáctica de escritorio: no compara benchmarks ni resuelve otras variantes del problema.
 
-## Características
+## 🎬 Vista rápida
 
-- **Backtracking exhaustivo** (N ≤ 8): coloca una reina por columna
-  comprobando fila y ambas diagonales contra las reinas ya colocadas;
-  siempre encuentra una solución si existe, y reporta correctamente que
-  no existe solución para N=2 y N=3 (los dos únicos casos sin solución).
-- **Min-Conflicts con reinicio aleatorio** (N > 8): parte de una
-  colocación aleatoria y mueve iterativamente la reina más conflictiva a
-  su posición de menor conflicto; si una ejecución queda atascada en una
-  meseta, se reinicia desde una nueva colocación aleatoria (hasta 30
-  veces) en lugar de recurrir a un backtracking exhaustivo que nunca
-  terminaría en un tablero grande.
-- **Selector de tamaño real** (N = 1 a 100): un control en la parte
-  superior de la ventana permite elegir el tamaño del tablero y ver
-  ambos algoritmos en acción, incluyendo los casos límite N=1, N=2 y
-  N=3.
-- **Estadísticas en tiempo real**: número de reinas colocadas,
-  conflictos totales y validez de la solución actual.
-- **Interfaz sin bloqueos**: la resolución corre en un hilo de fondo
-  (`SwingWorker`) mientras la ventana permanece responsiva.
-- **Efectos visuales**: animaciones de celebración al encontrar
-  solución, resaltado de reinas en conflicto y temas de color modernos.
+No hay capturas: no se logró una captura fiable de la ventana. Flujo real de uso:
 
-## Cómo usar
-
-1. Elige el tamaño del tablero (N) con el control numérico de la parte
-   superior.
-2. Pulsa **Resolver** para que la IA encuentre una solución: usa
-   Backtracking si N ≤ 8, o Min-Conflicts si N > 8.
-3. Pulsa **Reiniciar** para limpiar el tablero, o F1 para ver la ayuda
-   en pantalla.
-
-## Instalación y uso local
-
-Requiere JDK 17 o superior.
-
-**Con Maven** (recomendado — compila, corre las pruebas y empaqueta):
-
-```bash
-mvn package
-java -jar target/reinassolver-1.0.0.jar
+```text
+Elegir N (control numérico, 1-100)
+        │
+        ▼
+   [Resolver]  ── N ≤ 8 ──► Backtracking  ┐
+        │                                  ├─► tablero + estadísticas (reinas, conflictos, validez)
+        └───── N > 8 ──► Min-Conflicts ────┘
+   [Reiniciar] limpia el tablero · F1 abre la ayuda · Ctrl+R / Ctrl+N / Ctrl+Q
 ```
 
-**Sin Maven, con javac directamente:**
+## ✨ Características
+
+| Característica | Detalle |
+|---|---|
+| Backtracking (N ≤ 8) | Una reina por columna, comprobando fila y diagonales con `Tablero.esSeguro()`; informa que N=2 y N=3 no tienen solución |
+| Min-Conflicts (N > 8) | Parte de una colocación aleatoria y mueve reinas en conflicto a la fila con menos conflictos; hasta 30 reinicios de 1000 intentos cada uno |
+| Selector de tamaño | `JSpinner` de 1 a 100 (por defecto 8) |
+| Estadísticas | Reinas colocadas, conflictos totales y validez de la solución |
+| UI sin bloqueos | La resolución corre en un `SwingWorker` |
+| Efectos visuales y atajos | Animaciones, mensajes de éxito/error y atajos Ctrl+R, Ctrl+N, Ctrl+Q y F1 |
+
+## 🏗️ Arquitectura
+
+```mermaid
+flowchart LR
+    M["main.Main"] --> V["presentacion.VentanaPrincipal"]
+    V --> PC["PanelControles"]
+    V --> PT["PanelTablero"]
+    V --> EV["EfectosVisuales"]
+    V --> H["logica.HeuristicaIA"]
+    H --> T["logica.Tablero"]
+    PT --> T
+```
+
+<details>
+<summary>Estructura de carpetas</summary>
+
+```text
+src/logica/         Tablero, HeuristicaIA
+src/presentacion/   VentanaPrincipal, PanelControles, PanelTablero, EfectosVisuales
+src/main/           Main
+test/logica/        TableroTest, HeuristicaIATest (JUnit 5)
+pom.xml             Maven (release 17)
+nbproject/, .project, .classpath   metadatos de NetBeans y Eclipse
+```
+
+</details>
+
+## 🚀 Inicio rápido
+
+| Requisito | Versión |
+|---|---|
+| JDK | 17 o superior |
+| Maven | Opcional (recomendado) |
 
 ```bash
+# Con Maven: compila, prueba y empaqueta
+mvn package
+java -jar target/reinassolver-1.0.0.jar
+
+# Sin Maven
 javac -d bin src/logica/*.java src/main/*.java src/presentacion/*.java
 java -cp bin main.Main
 ```
 
-También puede importarse como proyecto existente en NetBeans, Eclipse o
-IntelliJ IDEA (incluye metadatos de proyecto para NetBeans y Eclipse).
+Usa el control de tamaño, pulsa **Resolver** y luego **Reiniciar** para empezar de nuevo.
 
-## Tecnologías
-
-- **Java 17+**, interfaz gráfica con **Swing** (sin dependencias de UI
-  externas).
-- **Maven** para la gestión de dependencias, pruebas y empaquetado.
-- **JUnit 5** para las pruebas automatizadas.
-- **GitHub Actions** para integración continua.
-
-## Algoritmos
-
-- **Backtracking**: para cada columna, prueba cada fila y comprueba
-  `esSeguro()` (misma fila, diagonal superior izquierda y diagonal
-  inferior izquierda contra las columnas ya colocadas — las únicas que
-  pueden tener una reina, dado que se coloca columna por columna); si
-  ninguna fila funciona, retrocede. Completo y correcto para cualquier
-  N, pero con costo exponencial en el peor caso, por lo que solo se usa
-  hasta N=8.
-- **Min-Conflicts**: coloca una reina por columna al azar y, mientras
-  existan reinas en conflicto, mueve una de ellas (elegida al azar entre
-  las conflictivas) a la fila de su columna con menos conflictos.
-  Es una búsqueda de ascenso de colinas y puede quedar atascada en una
-  meseta; el reinicio aleatorio acotado (hasta 30 intentos) es la
-  técnica estándar para resolver esto y hace que prácticamente siempre
-  converja, incluso para tableros de cientos de casillas.
-
-## Tests
-
-64 pruebas con JUnit 5: la lógica de `Tablero` (colocar/quitar reinas,
-`esSeguro()` en fila y ambas diagonales, conteo de conflictos, validez
-de una solución conocida), y `HeuristicaIA` de principio a fin —
-revalidando cada solución reportada de forma independiente (una reina
-por fila, sin columnas ni diagonales repetidas) en vez de confiar en el
-propio código de producción: el caso trivial N=1, los casos sin
-solución N=2 y N=3, Backtracking para N=4 a 8, Min-Conflicts para N=40
-y N=100 bajo límites de tiempo (`@Timeout`) que detectan una regresión
-del bloqueo por meseta, y repeticiones para detectar fallos
-intermitentes.
+## 🧪 Pruebas
 
 ```bash
 mvn test
 ```
 
-## Licencia
+Resultado verificado: **64 pruebas, todas OK** (52 en `HeuristicaIATest` y 12 en `TableroTest`, JUnit 5.10.2). Cubren `Tablero` (colocar/quitar, `esSeguro`, conflictos, validez) y `HeuristicaIA` de extremo a extremo, revalidando cada solución de forma independiente: N=1, N=2 y N=3 sin solución, Backtracking de N=4 a 8 y Min-Conflicts para N=40 y N=100 bajo `@Timeout`. La CI (`.github/workflows/ci.yml`) ejecuta `mvn test` y `mvn package` con JDK 17. No hay pruebas de la interfaz Swing.
 
-MIT — ver [LICENSE](LICENSE).
+## 🚧 Lo que todavía no existe
+
+- Sin captura ni demostración grabada en este repositorio.
+- Sin pruebas automatizadas de la interfaz gráfica.
+- Min-Conflicts no garantiza convergencia: si agota los 30 reinicios informa que no encontró solución.
+- No se pueden colocar reinas a mano ni elegir el algoritmo: el umbral N ≤ 8 está fijo en `HeuristicaIA.resolver()`.
+
+## 📄 Licencia
+
+MIT, ver [LICENSE](LICENSE).
+
+<div align="center"><sub>Hecho por Luiss2080 · N reinas en Java Swing</sub></div>
